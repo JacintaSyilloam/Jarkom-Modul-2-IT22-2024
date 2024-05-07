@@ -28,79 +28,417 @@
 
 
 
-## 1
+# No. 1
 > Untuk membantu pertempuran di Erangel, kamu ditugaskan untuk membuat jaringan komputer yang akan digunakan sebagai alat komunikasi. Sesuaikan rancangan Topologi dengan rancangan dan pembagian yang berada di link yang telah > disediakan, dengan ketentuan nodenya sebagai berikut:
 > - DNS Master akan diberi nama Pochinki, sesuai dengan kota tempat dibuatnya server tersebut
 > - Karena ada kemungkinan musuh akan mencoba menyerang Server Utama, maka buatlah DNS Slave Georgopol yang mengarah ke Pochinki
 > - Markas pusat juga meminta dibuatkan tiga Web Server yaitu Severny, Stalber, dan Lipovka. Sedangkan Mylta akan bertindak sebagai Load Balancer untuk server-server tersebut
 
 
-## 2
+On each node, configure network.
+
+
+### Erangel (Router)
+```
+auto eth0
+iface eth0 inet dhcp
+
+auto eth1
+iface eth1 inet static
+	address 192.244.1.2
+	netmask 255.255.255.0
+
+auto eth2
+iface eth2 inet static
+	address 192.244.2.2
+	netmask 255.255.255.0
+	
+auto eth3
+iface eth3 inet static
+	address 192.244.3.2
+	netmask 255.255.255.0
+```
+
+### Pochinki (DNS Master)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.3.1
+	netmask 255.255.255.0
+	gateway 192.244.3.2
+```
+
+### Georgopol (DNS Slave)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.2.1
+	netmask 255.255.255.0
+	gateway 192.244.2.2
+```
+
+### Severny (Web Server)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.1.3
+	netmask 255.255.255.0
+	gateway 192.244.1.2
+```
+
+### Stalber (Web Server)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.1.4
+	netmask 255.255.255.0
+	gateway 192.244.1.2
+```
+
+### Lipovka (Web Server)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.1.5
+	netmask 255.255.255.0
+	gateway 192.244.1.2
+```
+
+### MyIta (Load Balancer)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.2.3
+	netmask 255.255.255.0
+	gateway 192.244.2.2
+```
+
+### Ruins (Client)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.2.4
+	netmask 255.255.255.0
+	gateway 192.244.2.2
+```
+
+### Apartments (Client)
+```
+auto eth0
+iface eth0 inet static
+	address 192.244.2.5
+	netmask 255.255.255.0
+	gateway 192.244.2.2
+```
+
+## Check IP address
+```
+ip a
+```
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/cc1e021b-1322-4420-b6ac-eab06ae169d3)
+
+
+# 2
 >Karena para pasukan membutuhkan koordinasi untuk mengambil airdrop, maka buatlah sebuah domain yang mengarah ke Stalber dengan alamat airdrop.xxxx.com dengan alias www.airdrop.xxxx.com dimana xxxx merupakan kode kelompok. Contoh : airdrop.it01.com
 
+## Setup DNS @ Pochinki
+
+Update package lists
+```
+apt-get update -y
+```
+Install bind9
+```
+ apt-get install bind9 -y
+```
+Configure domain in ```/etc/bind/named.conf.local``` file
+```
+nano /etc/bind/named.conf.local
+```
+Write the domain configuration in ```/etc/bind/named.conf.local```
+```
+zone "airdrop.it22.com" {
+	type master;
+	file "/etc/bind/it22/airdrop.it22.com";
+};
+```
+Create /etc/bind/it22 directory
+```
+mkdir /etc/bind/it22
+```
+Copy db.local file to it22 folder that was made
+```
+cp /etc/bind/db.local /etc/bind/it22/airdrop.it22.com
+```
+Edit the DNS record
+```
+nano /etc/bind/it22/airdrop.it22.com
+```
+Edit file /etc/bind/it22/airdrop.it22.com as follows:
+```
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     airdrop.it22.com. root.airdrop.it22.com. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      airdrop.it22.com.
+@       IN      A       192.244.1.4
+@       IN      AAAA    ::1
+www     IN      CNAME   airdrop.it22.com.
+```
+- Specify hostname in NS records: airdrop.it22.com.
+- Specify address in A records: 192.244.1.4
+- Specify canonical name (alias) in CNAME records: airdrop.it22.com.
 
 
-## 3
+Restart bind9
+```
+service bind9 restart
+```
+
+
+# 3
 > Para pasukan juga perlu mengetahui mana titik yang sedang di bombardir artileri, sehingga dibutuhkan domain lain yaitu redzone.xxxx.com dengan alias www.redzone.xxxx.com yang mengarah ke Severny
 
 
+## Setup DNS @ Pochinki
 
-## 4
+Update package lists
+```
+apt-get update -y
+```
+Install bind9
+```
+ apt-get install bind9 -y
+```
+Configure domain in ```/etc/bind/named.conf.local``` file
+```
+nano /etc/bind/named.conf.local
+```
+Write the domain configuration in ```/etc/bind/named.conf.local```
+```
+zone "redzone.it22.com" {
+	type master;
+	file "/etc/bind/it22/redzone.it22.com";
+};
+```
+Create /etc/bind/it22 directory
+```
+mkdir /etc/bind/it22
+```
+Copy db.local file to it22 folder that was made
+```
+cp /etc/bind/db.local /etc/bind/it22/redzone.it22.com
+```
+Edit the DNS record
+```
+nano /etc/bind/it22/redzone.it22.com
+```
+Edit file /etc/bind/it22/redzone.it22.com as follows:
+```
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     redzone.it22.com. root.redzone.it22.com. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      redzone.it22.com.
+@       IN      A       192.244.1.3
+@       IN      AAAA    ::1
+www     IN      CNAME   redzone.it22.com.
+```
+- Specify hostname in NS records: redzone.it22.com.
+- Specify address in A records: 192.244.1.3
+- Specify canonical name (alias) in CNAME records: redzone.it22.com.
+
+
+Restart bind9
+```
+service bind9 restart
+```
+
+# 4
 > Markas pusat meminta dibuatnya domain khusus untuk menaruh informasi persenjataan dan suplai yang tersebar. Informasi persenjataan dan suplai tersebut mengarah ke Mylta dan domain yang ingin digunakan adalah loot.xxxx.com dengan alias www.loot.xxxx.com
 
 
+## Setup DNS @ Pochinki
 
-## 5
+Update package lists
+```
+apt-get update -y
+```
+Install bind9
+```
+ apt-get install bind9 -y
+```
+Configure domain in ```/etc/bind/named.conf.local``` file
+```
+nano /etc/bind/named.conf.local
+```
+Write the domain configuration in ```/etc/bind/named.conf.local```
+```
+zone "loot.it22.com" {
+	type master;
+	file "/etc/bind/it22/loot.it22.com";
+};
+```
+Create /etc/bind/it22 directory
+```
+mkdir /etc/bind/it22
+```
+Copy db.local file to it22 folder that was made
+```
+cp /etc/bind/db.local /etc/bind/it22/loot.it22.com
+```
+Edit the DNS record
+```
+nano /etc/bind/it22/loot.it22.com
+```
+Edit file /etc/bind/it22/loot.it22.com as follows:
+```
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     loot.it22.com. root.loot.it22.com. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      loot.it22.com.
+@       IN      A       192.244.2.3
+@       IN      AAAA    ::1
+www     IN      CNAME   loot.it22.com.
+```
+- Specify hostname in NS records: loot.it22.com.
+- Specify address in A records: 192.244.2.3
+- Specify canonical name (alias) in CNAME records: loot.it22.com.
+
+
+Restart bind9
+```
+service bind9 restart
+```
+
+
+# 5
 > Pastikan domain-domain tersebut dapat diakses oleh seluruh komputer (client) yang berada di Erangel
 
+The domain that we create will not be immediately recognized by the client, therefore we have to change the nameserver settings that exists on our client.
+
+Add IP machine where DNS was set up to resolv.conf of each client.
+
+Run script on each client (Ruins and Apartments):
+```
+# Define the desired nameservers in the specified order
+desired_nameservers=("192.244.1.4" "192.244.3.1")
+
+# Check if resolv.conf exists
+if [ -f /etc/resolv.conf ]; then
+    # Check if resolv.conf already matches the desired configuration
+    if ! cmp -s <(printf "%s\n" "${desired_nameservers[@]}") /etc/resolv.conf; then
+        # Backup the existing resolv.conf file
+        cp /etc/resolv.conf /etc/resolv.conf.backup
+
+        # Update resolv.conf with the desired nameservers
+        echo -e "$(printf "nameserver %s\n" "${desired_nameservers[@]}")" > /etc/resolv.conf
+        echo "Resolv.conf has been updated with the desired nameservers."
+    else
+        echo "Resolv.conf already matches the desired configuration."
+    fi
+else
+    echo "Error: /etc/resolv.conf does not exist."
+fi
+
+```
 
 
-## 6
+## Testing @ Ruins
+Ping airdrop.it22.com 
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/ad187148-1731-403b-aaf5-0db2c6a07996)
+
+
+Ping redzone.it22.com 
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/0ea9645b-d15c-4987-a459-c51afcd7d5bb)
+
+
+Ping loot.it22.com 
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/bdeb4d23-9439-44c0-8d1a-f7530424f2c0)
+
+
+
+## Testing @ Apartments
+Ping airdrop.it22.com 
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/02347e54-a41c-4637-a681-111b7c7a68af)
+
+
+Ping redzone.it22.com 
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/356ff73c-a21e-4e7e-ae74-39604e1fe140)
+
+
+Ping loot.it22.com 
+![image](https://github.com/JacintaSyilloam/Jarkom-Modul-2-IT22-2024/assets/121095246/5fbe21d5-9d57-479c-8f65-78e0f5d7ed4d)
+
+
+# 6
 > Beberapa daerah memiliki keterbatasan yang menyebabkan hanya dapat mengakses domain secara langsung melalui alamat IP domain tersebut. Karena daerah tersebut tidak diketahui secara spesifik, pastikan semua komputer (client) dapat mengakses domain redzone.xxxx.com melalui alamat IP Severny (Notes : menggunakan pointer record)
 
 
 
-## 7
+# 7
 > Akhir-akhir ini seringkali terjadi serangan siber ke DNS Server Utama, sebagai tindakan antisipasi kamu diperintahkan untuk membuat DNS Slave di Georgopol untuk semua domain yang sudah dibuat sebelumnya
 
 
 
-## 8
+# 8
 > Kamu juga diperintahkan untuk membuat subdomain khusus melacak airdrop berisi peralatan medis dengan subdomain medkit.airdrop.xxxx.com yang mengarah ke Lipovka
 
 
 
-## 9
+# 9
 > Terkadang red zone yang pada umumnya di bombardir artileri akan dijatuhi bom oleh pesawat tempur. Untuk melindungi warga, kita diperlukan untuk membuat sistem peringatan air raid dan memasukkannya ke subdomain siren.redzone.xxxx.com dalam folder siren dan pastikan dapat diakses secara mudah dengan menambahkan alias www.siren.redzone.xxxx.com dan mendelegasikan subdomain tersebut ke Georgopol dengan alamat IP menuju radar di Severny
 
 
 
-## 10
+# 10
 > Markas juga meminta catatan kapan saja pesawat tempur tersebut menjatuhkan bom, maka buatlah subdomain baru di subdomain siren yaitu log.siren.redzone.xxxx.com serta aliasnya www.log.siren.redzone.xxxx.com yang juga mengarah ke Severny
 
 
 
-## 11
+# 11
 > Setelah pertempuran mereda, warga Erangel dapat kembali mengakses jaringan luar, tetapi hanya warga Pochinki saja yang dapat mengakses jaringan luar secara langsung. Buatlah konfigurasi agar warga Erangel yang berada diluar Pochinki dapat mengakses jaringan luar melalui DNS Server Pochinki
 
 
 
-## 12
+# 12
 > Karena pusat ingin sebuah website yang ingin digunakan untuk memantau kondisi markas lainnya maka deploy lah webiste ini (cek resource yg lb) pada severny menggunakan apache
 
 
 
-## 13
+# 13
 > Tapi pusat merasa tidak puas dengan performanya karena traffic yag tinggi maka pusat meminta kita memasang load balancer pada web nya, dengan Severny, Stalber, Lipovka sebagai worker dan Mylta sebagai Load Balancer menggunakan apache sebagai web server nya dan load balancernya
 
 
 
-## 14
+# 14
 > Mereka juga belum merasa puas jadi pusat meminta agar web servernya dan load balancer nya diubah menjadi nginx
 
 
 
-## 15
+# 15
 > Markas pusat meminta laporan hasil benchmark dengan menggunakan apache benchmark dari load balancer dengan 2 web server yang berbeda tersebut dan meminta secara detail dengan ketentuan:
 > - Nama Algoritma Load Balancer
 > - Report hasil testing apache benchmark 
@@ -109,26 +447,26 @@
 
 
 
-## 16
+# 16
 > Karena dirasa kurang aman karena masih memakai IP, markas ingin akses ke mylta memakai mylta.xxx.com dengan alias www.mylta.xxx.com (sesuai web server terbaik hasil analisis kalian)
 
 
 
-## 17
+# 17
 > Agar aman, buatlah konfigurasi agar mylta.xxx.com hanya dapat diakses melalui port 14000 dan 14400.
 
 
 
-## 18
+# 18
 > Apa bila ada yang mencoba mengakses IP mylta akan secara otomatis dialihkan ke www.mylta.xxx.com
 
 
 
-## 19
+# 19
 > Karena probset sudah kehabisan ide masuk ke salah satu worker buatkan akses direktori listing yang mengarah ke resource worker2
 
 
 
-## 20
+# 20
 > Worker tersebut harus dapat di akses dengan tamat.xxx.com dengan alias www.tamat.xxx.com
 
