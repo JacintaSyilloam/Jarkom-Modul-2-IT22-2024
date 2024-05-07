@@ -1,4 +1,4 @@
-# Jarkom-Modul-1-IT22-2024
+# Jarkom-Modul-2-IT22-2024
 
 ## Kelompok(?) IT22 😹
 
